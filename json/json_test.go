@@ -1,44 +1,60 @@
-package emitter
+package json
 
 import (
 	"bytes"
 	"reflect"
 	"testing"
 	"unicode/utf8"
+
+	"github.com/chronos-tachyon/go-emitter"
+	"github.com/chronos-tachyon/go-emitter/values"
 )
 
+type Value = emitter.Value
+
 var (
-	kNullValue   Value = NullValue{}
-	kFalseValue  Value = BoolValue(false)
-	kTrueValue   Value = BoolValue(true)
-	kIntValue    Value = IntValue(-42)
-	kUintValue   Value = UintValue(42)
-	kFloatValue  Value = FloatValue(4.2)
-	kStringValue Value = StringValue("abc")
-	kBytesValue  Value = BytesValue("abc")
-	kArrayValue  Value = ArrayValue{RuneValue('a'), RuneValue('b'), RuneValue('c')}
-	kObjectValue Value = ObjectValue{{"a", IntValue(1)}, {"b", IntValue(2)}, {"c", IntValue(3)}}
-	kFancyValue  Value = ObjectValue{
-		{"@type", StringValue("Foo")},
-		{"emptyList", ArrayValue(nil)},
-		{"emptyObject", ObjectValue(nil)},
+	kNullValue   Value = values.Null{}
+	kFalseValue  Value = values.Bool(false)
+	kTrueValue   Value = values.Bool(true)
+	kIntValue    Value = values.Int(-42)
+	kUintValue   Value = values.Uint(42)
+	kFloatValue  Value = values.Float(4.2)
+	kStringValue Value = values.String("abc")
+	kBytesValue  Value = values.Bytes("abc")
+
+	kArrayValue Value = values.Array{
+		values.Rune('a'),
+		values.Rune('b'),
+		values.Rune('c'),
+	}
+
+	kObjectValue Value = values.Object{
+		{"a", values.Int(1)},
+		{"b", values.Int(2)},
+		{"c", values.Int(3)},
+	}
+
+	kFancyValue Value = values.Object{
+		{"@type", values.String("Foo")},
+		{"emptyList", values.Array(nil)},
+		{"emptyObject", values.Object(nil)},
 		{"array", kArrayValue},
 		{"object", kObjectValue},
 	}
 )
 
-func TestEmitter(t *testing.T) {
+func TestJSON(t *testing.T) {
 	type testCase struct {
 		Name      string
 		Input     Value
-		Factory   GeneratorFactory
+		Factory   emitter.GeneratorFactory
 		Expect    []byte
 		ExpectErr error
 	}
 
 	compactJSON := JSON{}
-	oneLineJSON := JSON{Format: OneLineJSON}
-	multiLineJSON := JSON{Format: MultiLineJSON}
+	oneLineJSON := JSON{Format: OneLine}
+	multiLineJSON := JSON{Format: MultiLine}
 
 	testData := [...]testCase{
 		{
@@ -272,11 +288,11 @@ func TestEmitter(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	var e Emitter
+	var e emitter.Emitter
 	for _, row := range testData {
 		t.Run(row.Name, func(t *testing.T) {
 			buf.Reset()
-			e.Reset(&buf, row.Factory.New())
+			e.Reset(&buf, row.Factory.NewGenerator())
 			row.Input.EmitTo(&e)
 			err := e.Close()
 

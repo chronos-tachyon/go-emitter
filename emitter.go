@@ -37,8 +37,10 @@ func (e *Emitter) Reset(w io.Writer, g Generator) {
 		panic(fmt.Errorf("emitter.Generator is nil"))
 	}
 
+	g.Reset()
 	*e = Emitter{w: w, g: g}
 	e.out = e.scratch[:0]
+	e.apply(g.Begin())
 }
 
 func (e *Emitter) Writer() io.Writer {

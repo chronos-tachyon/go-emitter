@@ -5,12 +5,14 @@ import (
 )
 
 type GeneratorFactory interface {
-	New() Generator
+	NewGenerator() Generator
 }
 
 type Generator interface {
+	Reset()
 	Factory() GeneratorFactory
 
+	Begin() []Appender
 	End() []Appender
 
 	StartObject() []Appender
